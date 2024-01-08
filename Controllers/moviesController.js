@@ -1,5 +1,6 @@
 // const fs = require('fs');
 const Movie = require('./../Models/movieModel');
+const ApiFeatures = require('./../Utils/ApiFeatures');
 
 //Middleware for aliasing a route
 exports.getHighestRated = (req, res, next) => {
@@ -12,61 +13,70 @@ exports.getHighestRated = (req, res, next) => {
 //Route handler functions
 exports.getAllMovies = async (req, res) => {
     try {
-        //FILTERS like: duration[gte]=118&ratings[gte]=7&price[lte]=100 will be changed to $gte, etc...
-        let queryStr = JSON.stringify(req.query);
-        queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);        
-        const queryObj = JSON.parse(queryStr);        
 
-        // const movies = await Movie.find(queryObj);   
+        const features = new ApiFeatures(Movie.find(), req.query)
+            .filter()
+            .sort()
+            .limit()
+            .paginate();
 
-        //When you send additional filters like sort or page, this works only on Mongoose version 7.0 (doesn't work for 8.0)
-        // const movies = await Movie.find(req.query);   
+        const movies = await features.query;
+
+        // //FILTERS like: duration[gte]=118&ratings[gte]=7&price[lte]=100 will be changed to $gte, etc...
+        // let queryStr = JSON.stringify(req.query);
+        // queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);        
+        // const queryObj = JSON.parse(queryStr);        
+
+        // // const movies = await Movie.find(queryObj);   
+
+        // //When you send additional filters like sort or page, this works only on Mongoose version 7.0 (doesn't work for 8.0)
+        // // const movies = await Movie.find(req.query);   
         
-        //************ Mongoose 6.0 or less (or 8.0)**************
-        const excludeFields = ['sort', 'page', 'limit', 'fields'];
-        // console.log("before: " + JSON.stringify(queryObj));        
-        // const queryObj = {...req.query}; //Create shallow copy of the object
-        excludeFields.forEach((el) => {
-            delete queryObj[el];
-        });
-        // console.log("after: " + JSON.stringify(queryObj));        
-        // const movies = await Movie.find(queryObj);    
-        /******************************************/    
-        let query = Movie.find(queryObj);
+        // //************ Mongoose 6.0 or less (or 8.0)**************
+        // const excludeFields = ['sort', 'page', 'limit', 'fields'];
+        // // console.log("before: " + JSON.stringify(queryObj));        
+        // // const queryObj = {...req.query}; //Create shallow copy of the object
+        // excludeFields.forEach((el) => {
+        //     delete queryObj[el];
+        // });
+        // // console.log("after: " + JSON.stringify(queryObj));        
+        // // const movies = await Movie.find(queryObj);    
+        // /******************************************/    
+        // let query = Movie.find(queryObj);
 
-        //SORTING LOGIC (use - before the field to sort in descending order)
-        if(req.query.sort) {            
-            const sortBy = req.query.sort.split(",").join(" "); //sort filters must be separated by space
-            // const s = { releaseYear: 1 };
-            query = query.sort(sortBy);            
-        }
-         else {
-            query = query.sort('createdAt'); //default sort order
-        }
+        // //SORTING LOGIC (use - before the field to sort in descending order)
+        // if(req.query.sort) {            
+        //     const sortBy = req.query.sort.split(",").join(" "); //sort filters must be separated by space
+        //     // const s = { releaseYear: 1 };
+        //     query = query.sort(sortBy);            
+        // }
+        //  else {
+        //     query = query.sort('createdAt'); //default sort order
+        // }
 
-        //LIMITING FIELDS (to exclude fields use -before the field in the query string (e.g. -duration))
-        if(req.query.fields){
-            const fields = req.query.fields.split(",").join(" ");
-            query.select(fields); //you could also use field property 'select: false' in the schema to hide it
-        } else {
-            query = query.select('-__v'); //if no field is specified, it will remove '__v' by default
-        }
+        // //LIMITING FIELDS (to exclude fields use -before the field in the query string (e.g. -duration))
+        // if(req.query.fields){
+        //     const fields = req.query.fields.split(",").join(" ");
+        //     query = query.select(fields); //you could also use field property 'select: false' in the schema to hide it
+        // } else {
+        //     query = query.select('-__v'); //if no field is specified, it will remove '__v' by default
+        // }
 
-        //PAGINATION
-        const page = +req.query.page || 1;
-        const limit = +req.query.limit || 10;
-        //PAGE 1: 1-10; PAGE 2: 11-20; PAGE 3: 21-30
-        const skip = (page-1) * limit;
-        query = query.skip(skip).limit(limit);
+        // //PAGINATION
+        // const page = +req.query.page || 1;
+        // const limit = +req.query.limit || 10;
+        // //PAGE 1: 1-10; PAGE 2: 11-20; PAGE 3: 21-30
+        // const skip = (page-1) * limit;
+        // query = query.skip(skip).limit(limit);
 
-        if(req.query.page) {
-            const moviesCount = await Movie.countDocuments();
-            if(skip>=moviesCount){
-                throw new Error("This page is not found!");
-            }
-        }
+        // if(req.query.page) {
+        //     const moviesCount = await Movie.countDocuments();
+        //     if(skip >= moviesCount){
+        //         throw new Error("This page is not found!");
+        //     }
+        // }
 
-        const movies = await query;
+        // const movies = await query;
 
         //Mongoose special functions (Not suitable for all cases)
         // const movies = await Movie.find()
