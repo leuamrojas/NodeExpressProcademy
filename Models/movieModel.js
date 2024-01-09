@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const fs = require('fs');
+const validator = require('validator');
 
 const movieSchema = new mongoose.Schema({
     name: {
@@ -8,7 +9,8 @@ const movieSchema = new mongoose.Schema({
         unique: true,
         maxlength: [100, 'Movie name must not have more than 100 characters'],
         minlength: [4, 'Movie name must have at least 4 characters'],
-        trim: true
+        trim: true,
+        validate: [validator.isAlpha, 'Name should only contain alphabets.']
     },
     description: { 
         type: String,
@@ -21,8 +23,13 @@ const movieSchema = new mongoose.Schema({
     },
     ratings: {
         type: Number,
-        min: [1, 'Ratings must be 1.0 or above'],
-        max: [10, 'Ratings must be 10.0 or below']
+        validate: {
+            validator: function(value) {
+                // 'this' keyword would work only for create, not for update
+                return value>=1 && value<=10;
+            },
+            message: "Ratings ({VALUE}) should be above 1 and below 10"
+        }
     },
     totalRating: {
         type: Number
