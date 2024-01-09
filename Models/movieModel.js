@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const fs = require('fs');
 
 const movieSchema = new mongoose.Schema({
     name: {
@@ -53,6 +54,7 @@ const movieSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Price is required field!']
     },
+    createdBy: string
 }, {
     toJSON: { virtuals: true },
     toObject: { virtuals: true } //Make it accesible to use from code
@@ -61,6 +63,25 @@ const movieSchema = new mongoose.Schema({
 //Create virtual properties
 movieSchema.virtual('durationInHours').get(function() {
   return this.duration / 60; // we don't use arrow function because it doesn't have its own 'this' keyword  
+});
+
+//Document Middleware: executed before the document is saved in DB
+//.save() or .create()
+//insertMany, findByIdAndUpdate will not work
+//You can have multiple middlewares and they will be executed in the order of appearance
+movieSchema.pre('save', function(next) {
+    this.createdBy = 'LOGGED_IN_USER'; //We add the logged in username before the doc is saved (pre-hook on save event)
+
+    next();
+});
+
+movieSchema.post('save', function(doc, next) {
+    const content = `A new movie document with name ${doc.name} has been created by ${doc.createdBy}\n`;
+    fs.writeFileSync('./Log/log.txt', content, {flag: 'a'}, (err) => {
+        console.log(err.message);
+    });
+
+    next();
 });
 
 const Movie = mongoose.model('Movie', movieSchema);
