@@ -174,6 +174,64 @@ exports.deleteMovie = async (req, res) => {
     }
 };
 
+exports.getMovieStats = async (req, res) => {
+    try {
+        const stats = await Movie.aggregate([
+            { $match: {ratings: { $gte: 4.5 }} },
+            { $group: {
+                _id: '$releaseYear', // set to null if you want for one group with all the movies
+                avgRating: { $avg: '$ratings' },
+                avgPrice: { $avg: '$price' },
+                minPrice: { $min: '$price' },
+                maxPrice: { $max: '$price' },
+                priceTotal: { $sum: '$price' },
+                moviesCount: { $sum: 1 },
+            }},
+            { $sort: { minPrice: -1 } },
+            { $match: { maxPrice: { $gte: 60 } } }
+        ]);
+
+        res.status(200).json({
+            count: stats.length,
+            status: 'success',
+            data: stats
+        })
+    } catch (err) {
+        res.status(404).json({
+            status: 'fail',
+            message: err.message
+        });
+    }
+}
+
+exports.getMovieByGenre = async (req, res) => {
+    try {
+        const genre = req.params.genre;
+        const movies = await Movie.aggregate([
+            { $unwind: '$genres' }, //deconstructs an array field from the input documents to output a document for each element
+            { $group: { 
+                _id: '$genres',
+                moviesCount: { $sum: 1 },
+                movies: { $push: '$name' }
+            }},
+            { $addFields: { genre: '$_id' } },
+            { $project: { _id: 0 } }, // 0=remove field from result           
+            { $sort: { moviesCount: -1 } },
+            { $match: { genre: genre } }
+        ]);
+
+        res.status(200).json({
+            count: movies.length,
+            status: 'success',
+            data: movies
+        })
+    } catch (err) {
+        res.status(404).json({
+            status: 'fail',
+            message: err.message
+        });
+    }
+}
 
 // let movies = JSON.parse(fs.readFileSync('./data/movies.json'));
 

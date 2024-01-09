@@ -14,6 +14,13 @@ const router = express.Router();
 router.route('/highest-rated')
     .get(moviesController.getHighestRated, moviesController.getAllMovies)
 
+//Aggregate pipeline functions    
+router.route('/movie-stats')
+    .get(moviesController.getMovieStats);
+
+router.route('/movie-by-genre/:genre')
+    .get(moviesController.getMovieByGenre);
+
 router.route('/')
     .get(moviesController.getAllMovies)
     .post(moviesController.createMovie);
