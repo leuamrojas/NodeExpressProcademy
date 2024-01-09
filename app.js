@@ -1,6 +1,7 @@
 const { fail } = require('assert');
 const express = require('express');
-
+const CustomError = require ('./Utils/CustomError');
+const globalErrorHandler = require('./Controllers/errorController');
 const moviesRouter = require('./Routes/moviesRoutes')
 
 let app = express();
@@ -25,9 +26,12 @@ app.all('*', (req, res, next) => {
     //     status: 'fail',
     //     message: `Can't find ${req.originalUrl} on the server!`
     // });
-    const err = new Error(`Can't find ${req.originalUrl} on the server!`);
-    err.status = 'fail';
-    err.statusCode = 404;
+    // Replaced these lines with CustomError class
+    // const err = new Error(`Can't find ${req.originalUrl} on the server!`);
+    // err.status = 'fail';
+    // err.statusCode = 404;
+
+    const err = new CustomError(`Can't find ${req.originalUrl} on the server!`, 404);
 
     // whenever we pass any object to 'next()', express assumes there was an error
     // and will skip all other middleware functions in the stack 
@@ -36,14 +40,7 @@ app.all('*', (req, res, next) => {
 });
 
 //Global Error Handling Middleware
-app.use((error, req, res, next) => {
-    error.statusCode = error.statusCode || 500;
-    error.status = error.status || 'error';
-    res.status(error.statusCode).json({
-        status: error.statusCode,
-        message: error.message
-    });
-});
+app.use(globalErrorHandler);
 
 
 module.exports = app;
