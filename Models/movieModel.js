@@ -53,6 +53,14 @@ const movieSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Price is required field!']
     },
+}, {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true } //Make it accesible to use from code
+});
+
+//Create virtual properties
+movieSchema.virtual('durationInHours').get(function() {
+  return this.duration / 60; // we don't use arrow function because it doesn't have its own 'this' keyword  
 });
 
 const Movie = mongoose.model('Movie', movieSchema);
