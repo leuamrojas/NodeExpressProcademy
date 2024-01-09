@@ -1,6 +1,8 @@
 // const fs = require('fs');
+const CustomError = require('../Utils/CustomError');
 const Movie = require('./../Models/movieModel');
 const ApiFeatures = require('./../Utils/ApiFeatures');
+const asyncErrorHandler = require('./../Utils/AsyncErrorHandler');
 
 //Middleware for aliasing a route
 exports.getHighestRated = (req, res, next) => {
@@ -11,8 +13,8 @@ exports.getHighestRated = (req, res, next) => {
 }
 
 //Route handler functions
-exports.getAllMovies = async (req, res) => {
-    try {
+exports.getAllMovies = asyncErrorHandler( async (req, res, next) => {
+    // try {
 
         const features = new ApiFeatures(Movie.find(), req.query)
             .filter()
@@ -92,16 +94,16 @@ exports.getAllMovies = async (req, res) => {
                 movies
             }
         });
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err.message
-        });
-    }
-};
+    // } catch (err) {
+    //     res.status(404).json({
+    //         status: 'fail',
+    //         message: err.message
+    //     });
+    // }
+});
 
-exports.getMovie = async (req, res) => {
-    try {
+exports.getMovie = asyncErrorHandler(async (req, res, next) => {
+    // try {
         // const movies = await Movie.find({_id: req.params.id});
         const movie = await Movie.findById(req.params.id);
 
@@ -111,34 +113,54 @@ exports.getMovie = async (req, res) => {
                 movie
             }
         });
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err.message
-        });
-    }
-};
+    // } catch (err) {
+    //     res.status(404).json({
+    //         status: 'fail',
+    //         message: err.message
+    //     });
+    // }
+});
 
-exports.createMovie = async (req, res) => {
-    // const testMovie = new Movie({});
-    // testMovie.save();
-    try {
-        const movie = await Movie.create(req.body);
-        res.status(201).json({
-            status: 'success',
-            data: {
-                movie
-            }
-        })
-    } catch (err) {
-        res.status(400).json({
-            status: 'fail',
-            message: err.message
-        })
-    }
-};
+//Moved to AsyncErrorHandler.js
+// const asyncErrorHandler = (func) => {
+//     return (req, res, next) => {
+//         func(req, res, next).catch(err => next(err));
+//     }    
+// }
 
-exports.updateMovie = async (req, res) => {
+exports.createMovie = asyncErrorHandler( async (req, res, next) => {
+    const movie = await Movie.create(req.body);
+    res.status(201).json({
+        status: 'success',
+        data: {
+            movie
+        }
+    });
+});
+
+
+// exports.createMovie = async (req, res) => {
+//     // const testMovie = new Movie({});
+//     // testMovie.save();
+//     try {
+//         const movie = await Movie.create(req.body);
+//         res.status(201).json({
+//             status: 'success',
+//             data: {
+//                 movie
+//             }
+//         })
+//     } catch (err) {
+//         const error = new CustomError(err.message, 400);
+//         next(error);
+//         // res.status(400).json({
+//         //     status: 'fail',
+//         //     message: err.message
+//         // })
+//     }
+// };
+
+exports.updateMovie = async (req, res, next) => {
     try {
         // new: true will return the document after the update has been applied
         // runValidators: true will run validators defined in the Schema
@@ -158,24 +180,24 @@ exports.updateMovie = async (req, res) => {
     }
 };
 
-exports.deleteMovie = async (req, res) => {
-    try {
+exports.deleteMovie = asyncErrorHandler(async (req, res, next) => {
+    // try {
         await Movie.findByIdAndDelete(req.params.id); 
 
         res.status(204).json({
             status: 'success',
             data: null
         })
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err.message
-        });
-    }
-};
+    // } catch (err) {
+    //     res.status(404).json({
+    //         status: 'fail',
+    //         message: err.message
+    //     });
+    // }
+});
 
-exports.getMovieStats = async (req, res) => {
-    try {
+exports.getMovieStats = asyncErrorHandler(async (req, res, next) => {
+    // try {
         const stats = await Movie.aggregate([
             { $match: {ratings: { $gte: 4.5 }} },
             { $group: {
@@ -196,16 +218,16 @@ exports.getMovieStats = async (req, res) => {
             status: 'success',
             data: stats
         })
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err.message
-        });
-    }
-}
+    // } catch (err) {
+    //     res.status(404).json({
+    //         status: 'fail',
+    //         message: err.message
+    //     });
+    // }
+});
 
-exports.getMovieByGenre = async (req, res) => {
-    try {
+exports.getMovieByGenre = asyncErrorHandler(async (req, res, next) => {
+    // try {
         const genre = req.params.genre;
         const movies = await Movie.aggregate([
             { $unwind: '$genres' }, //deconstructs an array field from the input documents to output a document for each element
@@ -225,13 +247,13 @@ exports.getMovieByGenre = async (req, res) => {
             status: 'success',
             data: movies
         })
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err.message
-        });
-    }
-}
+    // } catch (err) {
+    //     res.status(404).json({
+    //         status: 'fail',
+    //         message: err.message
+    //     });
+    // }
+});
 
 // let movies = JSON.parse(fs.readFileSync('./data/movies.json'));
 
