@@ -1,1 +1,3 @@
 Query took 119 milliseconds to fetch the documents
+Query took 120 milliseconds to fetch the documents
+Query took 111 milliseconds to fetch the documents
