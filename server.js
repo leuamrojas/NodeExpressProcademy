@@ -11,27 +11,22 @@ mongoose.connect(process.env.CONN_STR, {
 }).then((conn) => {
     // console.log(conn);
     console.log('DB Connection Successful');
-}).catch((error) => {
-    console.log('Some error has occured')
 });
-
-// const testMovie = new Movie({
-//     name: 'Intersteller',
-//     description: 'Sci-fi movie',
-//     duration: 139,    
-// });
-
-// testMovie.save()
-// .then(doc => {
-//     console.log(doc);
-// })
-// .catch(err => {
-//     console.log('Error occured: ' + err);
-// });
 
 //Create a server
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log('server has started...');
 });
+
+//whenever there is a unhandled rejected promise
+process.on('unhandledRejection', (err) => {
+    console.log(err.name);
+    console.log(err.message);
+    console.log('Unhandled rejection occured! Shutting down...');
+
+    server.close(() => {
+        process.exit(1); // 1 = uncaught exception
+    });    
+})
