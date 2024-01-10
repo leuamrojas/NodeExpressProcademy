@@ -8,3 +8,6 @@ Query took 108 milliseconds to fetch the documents
 Query took 90 milliseconds to fetch the documents
 Query took 96 milliseconds to fetch the documents
 Query took 95 milliseconds to fetch the documents
+Query took 105 milliseconds to fetch the documents
+Query took 100 milliseconds to fetch the documents
+Query took 95 milliseconds to fetch the documents
