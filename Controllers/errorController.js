@@ -12,8 +12,11 @@ const devErrors = (res, error) => {
 
 const castErrorHandler = (err) => {
     const msg = `Invalid value for ${err.path}: ${err.value}`;
-    console.log('msg: ' + msg);
+    return new CustomError(msg, 400);
+}
 
+const duplicateKeyErrorHandler = (err) => {
+    const msg = `There is already a movie with name ${err.keyValue.name}. Please use another name`;
     return new CustomError(msg, 400);
 }
 
@@ -39,9 +42,8 @@ module.exports = (error, req, res, next) => {
         devErrors(res, error);
     } else if (process.env.NODE_ENV === 'production') {
         console.log(error);
-        if (error.name === 'CastError') {
-            error = castErrorHandler(error);
-        }        
+        if (error.name === 'CastError') error = castErrorHandler(error);
+        if (error.code === 11000) error = duplicateKeyErrorHandler(error);
 
         prodErrors(res, error);
     }    

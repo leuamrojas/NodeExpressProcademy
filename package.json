@@ -4,7 +4,8 @@
   "description": "Learning express js with node",
   "main": "app.js",
   "scripts": {
-    "start": "node --watch server.js",
+    "start": "SET NODE_ENV=development& node --watch server.js",
+    "start_prod": "SET NODE_ENV=production& node --watch server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Manuel Rojas",
