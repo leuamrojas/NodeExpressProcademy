@@ -20,13 +20,23 @@ const duplicateKeyErrorHandler = (err) => {
     return new CustomError(msg, 400);
 }
 
+const validationErrorHandler = (err) => {
+    const errors = Object.values(err.errors).map(val => val.message);
+    const errorMessages = errors.join('. ');
+    const msg = `Invalid input data: ${errorMessages}`;
+    
+    return new CustomError(msg, 400);
+}
+
 const prodErrors = (res, error) => {
-    if (error.isOperational) {
+    if (error.isOperational) { // Errors that we want to send to the client. They're created by creating a CustomError object
         res.status(error.statusCode).json({
             status: error.statusCode,
             message: error.message,
         });
-    } else { // Errors created by Mongoose (e.g. validation errors) are not operational
+    } else { 
+        // Programmer or server side errors. Also errors created by Mongoose (e.g. validation errors). 
+        // Those are not operational (it is fixed below with custom error handlers)
         res.status(500).json({
             status: 'error',
             message: 'Something went wrong! Please, try again later.'
@@ -41,9 +51,9 @@ module.exports = (error, req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
         devErrors(res, error);
     } else if (process.env.NODE_ENV === 'production') {
-        console.log(error);
         if (error.name === 'CastError') error = castErrorHandler(error);
         if (error.code === 11000) error = duplicateKeyErrorHandler(error);
+        if (error.name === 'ValidationError') error = validationErrorHandler(error); //Mongoose validation errors 
 
         prodErrors(res, error);
     }    
