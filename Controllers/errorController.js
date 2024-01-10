@@ -54,6 +54,7 @@ module.exports = (error, req, res, next) => {
         if (error.name === 'CastError') error = castErrorHandler(error);
         if (error.code === 11000) error = duplicateKeyErrorHandler(error);
         if (error.name === 'ValidationError') error = validationErrorHandler(error); //Mongoose validation errors 
+        //ReferenceError (e.g. variable not defined) will not show up in production because it's not operational
 
         prodErrors(res, error);
     }    
