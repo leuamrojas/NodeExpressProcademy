@@ -23,9 +23,16 @@ const duplicateKeyErrorHandler = (err) => {
 const validationErrorHandler = (err) => {
     const errors = Object.values(err.errors).map(val => val.message);
     const errorMessages = errors.join('. ');
-    const msg = `Invalid input data: ${errorMessages}`;
-    
-    return new CustomError(msg, 400);
+    const msg = `Invalid input data: ${errorMessages}`;    
+    return new CustomError(msg, 400);    
+}
+
+const tokenExpiredErrorHandler = (err) => {
+    return new CustomError('Token has expired. Please, login again!', 401);
+}
+
+const jsonWebTokenErrorHandler = (err) => {
+    return new CustomError('Invalid token. Please, login again!', 401);
 }
 
 const prodErrors = (res, error) => {
@@ -54,6 +61,8 @@ module.exports = (error, req, res, next) => {
         if (error.name === 'CastError') error = castErrorHandler(error);
         if (error.code === 11000) error = duplicateKeyErrorHandler(error);
         if (error.name === 'ValidationError') error = validationErrorHandler(error); //Mongoose validation errors 
+        if (error.name === 'TokenExpiredError') error = tokenExpiredErrorHandler(error);
+        if (error.name === 'JsonWebTokenError') error = jsonWebTokenErrorHandler(error);
         //ReferenceError (e.g. variable not defined) will not show up in production because it's not operational
 
         prodErrors(res, error);

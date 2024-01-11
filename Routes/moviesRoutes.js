@@ -1,5 +1,6 @@
 const express = require('express');
 const moviesController = require('./../Controllers/moviesController');
+const authController = require('./../Controllers/authController');
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ router.route('/movie-by-genre/:genre')
     .get(moviesController.getMovieByGenre);
 
 router.route('/')
-    .get(moviesController.getAllMovies)
+    .get(authController.protect, moviesController.getAllMovies)
     .post(moviesController.createMovie);
     // .post(moviesController.validateBody, moviesController.createMovie); //Use the middleware 'validateBody'
 
