@@ -3,6 +3,7 @@ const express = require('express');
 const CustomError = require ('./Utils/CustomError');
 const globalErrorHandler = require('./Controllers/errorController');
 const moviesRouter = require('./Routes/moviesRoutes')
+const authRouter = require('./Routes/authRoutes')
 
 let app = express();
 
@@ -17,7 +18,7 @@ app.use(express.static('./public')); // Serve static files
 //Mount the router moviesRouter to path /api/v1/movies. The router is basically a middleware 
 //that will only be applied to those requests that contain the path in the url
 app.use('/api/v1/movies', moviesRouter);
-app.use('/api/v1/users', moviesRouter);
+app.use('/api/v1/users', authRouter);
 
 //will execute for all the urls for which we have not defined a route
 //must always come last in the defined routes (if placed first, '/api/v1/movies' route would match the '*' pattern)
