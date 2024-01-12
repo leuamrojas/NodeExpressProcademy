@@ -38,8 +38,8 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
     // select('+password') is used to include the password (which is 'select: false) in the schema
     const user = await User.findOne({ email }).select('+password');
 
-    console.log(user);
-    //Check if the user exists & password matches (comparePasswordInDb is defined in userModel.js)
+    //Instance method to check if the user exists & password matches 
+    //(comparePasswordInDb is defined in userModel.js)
     if(!user || !(await user.comparePasswordInDb(password, user.password))) {
         console.log(user);
         const error = new CustomError('Incorrect email or password', 400);
@@ -72,13 +72,23 @@ exports.protect = asyncErrorHandler(async (req, res, next) => {
 
     //2. Validate the token
     const decodedToken = await util.promisify(jwt.verify)(token, process.env.SECRET_STR);
-
     console.log(decodedToken);
 
-    //3. Check if the user exists
+    //3. Check if the user exists (it could be deleted after the token was created)
+    const user = await User.findById(decodedToken.id);
+
+    if (!user) {
+        const error = new CustomError('The user with the given token does not exist', 401);
+        next(error);
+    }
 
     //4. If the user changed password after the token was issued
+    if (await user.isPasswordChanged(decodedToken.iat)) {
+        const error = new CustomError('The password has been changed recently. Please, login again', 401);
+        next(error);
+    }
 
     //5. Allow user to access route
+    req.user = user;
     next();
 });
