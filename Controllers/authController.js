@@ -58,25 +58,19 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
 exports.protect = asyncErrorHandler(async (req, res, next) => {
     //1. Read the token & check if it exists
     const testToken = req.headers.authorization;
-    // console.log(req.headers);
-    console.log(testToken);
     let token;
-
     if (testToken && testToken.toLowerCase().startsWith('bearer')) {
         token = testToken.split(' ')[1];
     }
-
     if(!token){
         next(new CustomError('You\'re not logged in!'), 401);
     }    
 
     //2. Validate the token
     const decodedToken = await util.promisify(jwt.verify)(token, process.env.SECRET_STR);
-    console.log(decodedToken);
 
     //3. Check if the user exists (it could be deleted after the token was created)
     const user = await User.findById(decodedToken.id);
-
     if (!user) {
         const error = new CustomError('The user with the given token does not exist', 401);
         next(error);
@@ -89,6 +83,31 @@ exports.protect = asyncErrorHandler(async (req, res, next) => {
     }
 
     //5. Allow user to access route
-    req.user = user;
+    // this will be useful later (see below) when checking authorization on routes
+    req.user = user; 
     next();
 });
+
+//Check if user is authorized
+//We have to use a wrapping function so we can pass the role to be allowed
+exports.restrict = (role) => {
+    return (req, res, next) => {
+        if (req.user.role != role) {
+            const error = new CustomError('You do not have permission to perform this action', 403);
+            next(error);
+        }
+        next();
+    };
+};
+
+//This is to allow multiple roles to perform a given action 
+//authController.restrict('admin', 'test1')
+// exports.restrict = (...role) => {
+//     return (req, res, next) => {
+//         if (!role.includes(req.user.role)) {
+//             const error = new CustomError('You do not have permission to perform this action', 403);
+//             next(error);
+//         }
+//         next();
+//     };
+// };

@@ -27,3 +27,8 @@ Query took 524 milliseconds to fetch the documents
 Query took 101 milliseconds to fetch the documents
 Query took 100 milliseconds to fetch the documents
 Query took 99 milliseconds to fetch the documents
+Query took 95 milliseconds to fetch the documents
+Query took 93 milliseconds to fetch the documents
+Query took 125 milliseconds to fetch the documents
+A new movie document with name Test Movie 1 has been created by LOGGED_IN_USER
+Query took 8873 milliseconds to fetch the documents

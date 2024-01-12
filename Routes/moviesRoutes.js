@@ -28,8 +28,8 @@ router.route('/')
     // .post(moviesController.validateBody, moviesController.createMovie); //Use the middleware 'validateBody'
 
 router.route('/:id')
-    .get(moviesController.getMovie)
+    .get(authController.protect, moviesController.getMovie)
     .patch(moviesController.updateMovie)
-    .delete(moviesController.deleteMovie);
+    .delete(authController.protect, authController.restrict('admin'), moviesController.deleteMovie);
 
 module.exports = router;
