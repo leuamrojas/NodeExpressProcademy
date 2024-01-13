@@ -3,6 +3,7 @@ const asyncErrorHandler = require('./../Utils/AsyncErrorHandler');
 const jwt = require('jsonwebtoken');
 const CustomError = require('./../Utils/CustomError');
 const util = require('util');
+const sendEmail = require('./../Utils/email');
 
 const signToken = id => {
     return jwt.sign({id}, process.env.SECRET_STR, {
@@ -111,3 +112,45 @@ exports.restrict = (role) => {
 //         next();
 //     };
 // };
+
+exports.forgotPassword = asyncErrorHandler(async (req, res, next) => {
+    //1. Get user based on posted email
+    const user = await User.findOne({email: req.body.email});
+    if (!user) {
+        const error = new CustomError('We could not find the user the given email', 404);
+        next(error);
+    }
+
+    //2. Generate a random reset token
+    const resetToken = await user.createResetPasswordToken();
+    // validateBeforeSave is to skip validations on user model, we just need to send user's email
+    user.save({validateBeforeSave: false})
+
+    //3. Send the token back to the user's email
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
+    const message = `We have received a password reset request. Please use the link below to reset your password\n\n${resetUrl}\n\nThis reset password link will be valid only for 10 minutes`;
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: 'Password change request received',
+            message: message
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'password reset link sent to the user email'
+        });
+    
+    } catch (err) {
+        //This will be exceuted if the sendEmail is not able to send a passwordReset email to the user
+        user.passwordResetToken = undefined;
+        user.passwordResetTokenExpires = undefined;
+        user.save({validateBeforeSave: false});
+        const error = 'There was an error sending password reset email. Please try again later';
+
+        return next(new CustomError(error), 500);
+    }});
+
+exports.passwordReset = asyncErrorHandler(async (req, res, next) => {
+});
