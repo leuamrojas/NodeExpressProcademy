@@ -19,6 +19,19 @@ const filterReqObj = (obj, ...allowedFields) => {
     return newObj;
 };
 
+// A 'pre' query middleware is added in the user schema to filter and return only active users
+exports.getAllUsers = asyncErrorHandler(async (req, res, next) => {
+    const users = await User.find();
+    
+    res.status(200).json({
+        status: 'success',
+        count: users.length,
+        data: {
+            users
+        }
+    });
+});
+
 exports.updatePassword = asyncErrorHandler(async (req, res, next) => {
 
     //GETCURRENT USER DATA FROM DATABASE
@@ -67,5 +80,15 @@ exports.updateMe = asyncErrorHandler(async (req, res, next) => {
         status: 'success',        
         user: updatedUser
         
+    });
+});
+
+//Soft delete (change 'active' property)
+exports.deleteMe = asyncErrorHandler(async (req, res, next) => {
+    await User.findByIdAndUpdate(req.user._id, {active: false});
+
+    res.status(204).json({
+        status: 'success',
+        data: null
     });
 });

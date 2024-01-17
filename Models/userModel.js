@@ -38,6 +38,11 @@ const userSchema = new mongoose.Schema({
             message: 'Password and ConfirmPassword do not match'
         }
     },
+    active: {
+        type: Boolean,
+        default: true,
+        select: false
+    },
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetTokenExpires: Date
@@ -50,6 +55,15 @@ userSchema.pre('save', async function(next) {
     // 12=salt length (the higher the value, the longer it takes to compute the hash)
     this.password = await bcrypt.hash(this.password, 12); 
     this.confirmPassword = undefined;
+    next();
+});
+
+// Used to filter and return only active users
+// This function uses regex to run before any query that starts with find
+userSchema.pre(/^find/, async function(next) {
+    //'this' keyword in the function will point to current query
+    // this.find({active: true}); //It will return 0 users because there are some without the 'active' property
+    this.find({active: {$ne: false}}); //returns also users without 'active' property set
     next();
 });
 
