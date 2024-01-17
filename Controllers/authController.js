@@ -4,26 +4,35 @@ const jwt = require('jsonwebtoken');
 const CustomError = require('./../Utils/CustomError');
 const util = require('util');
 const sendEmail = require('./../Utils/email');
+const crypto = require('crypto');
+const createSendResponse = require('../Utils/authResponse');
 
-const signToken = id => {
-    return jwt.sign({id}, process.env.SECRET_STR, {
-        expiresIn: process.env.LOGIN_EXPIRES
-    });
-}
+// const signToken = id => {
+//     return jwt.sign({id}, process.env.SECRET_STR, {
+//         expiresIn: process.env.LOGIN_EXPIRES
+//     });
+// }
+
+// exports.createSendResponse = (user, statusCode, res) => {
+
+//     const token = signToken(user._id);
+
+//     res.status(statusCode).json({
+//         status: 'success',
+//         token,
+//         data: {
+//             user
+//         }
+//     });
+// }
 
 exports.signup = asyncErrorHandler(async (req, res, next) => {
     const newUser = await User.create(req.body);
 
     // jwt will not include the extra options payload like 'expiresIn'
-    const token = signToken(newUser._id);
+    // const token = signToken(newUser._id);
 
-    res.status(201).json({
-        status: 'success',
-        token,
-        data: {
-            user: newUser
-        }
-    });
+    createSendResponse(newUser, 201, res);
 });
 
 exports.login = asyncErrorHandler(async (req, res, next) => {
@@ -47,12 +56,13 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
         return next(error);
     }
 
-    const token = signToken(user._id);
+    createSendResponse(user, 200, res);
+    // const token = signToken(user._id);
 
-    res.status(200).json({
-        status: 'success',
-        token        
-    });
+    // res.status(200).json({
+    //     status: 'success',
+    //     token        
+    // });
 });
 
 // Check if user is authenticated
@@ -153,4 +163,32 @@ exports.forgotPassword = asyncErrorHandler(async (req, res, next) => {
     }});
 
 exports.passwordReset = asyncErrorHandler(async (req, res, next) => {
+    //1. Check if the user exists with the given token & token has not expired
+    const token = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const user = await User.findOne({passwordResetToken: token, passwordResetTokenExpires: {$gt: Date.now()}});
+
+    if (!user) {
+        const error = new CustomError("Token is invalid or has expired!", 400);
+        next(error);
+    }
+
+    //2. Reseting the user password
+    user.password = req.body.password;
+    user.confirmPassword = req.body.confirmPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetTokenExpires = undefined;
+    user.passwordChangedAt = Date.now();
+
+    user.save();
+
+    //3. Login user
+    createSendResponse(user, 200, res);
+    // const loginToken = signToken(user._id);
+
+    // res.status(200).json({
+    //     status: 'success',
+    //     token: loginToken        
+    // });
+
 });
+
