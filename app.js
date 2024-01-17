@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const CustomError = require ('./Utils/CustomError');
 const globalErrorHandler = require('./Controllers/errorController');
 const moviesRouter = require('./Routes/moviesRoutes');
@@ -7,6 +8,16 @@ const userRouter = require('./Routes/userRoutes');
 
 let app = express();
 
+//This will create 3 new headers in the response:
+//X-Powered-By, X-RateLimit, X-RateLimit-Remaining
+//The rate limit values will be reset on app restart
+let limiter = rateLimit({
+    max: 3, //number of requests to be allowed
+    widnowMs: 60 * 60 * 1000, //timeframe in milliseconds,
+    message: 'We have received too many requests from this IP. Please, try after 1 hour.'
+});
+
+app.use('/api', limiter);
 app.use(express.json()); // Adds a middleware to add the request body to the request object
 app.use(express.static('./public')); // Serve static files
 // app.get('/api/v1/movies', getAllMovies);
