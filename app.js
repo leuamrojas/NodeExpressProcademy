@@ -1,5 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+
 const CustomError = require ('./Utils/CustomError');
 const globalErrorHandler = require('./Controllers/errorController');
 const moviesRouter = require('./Routes/moviesRoutes');
@@ -7,6 +9,8 @@ const authRouter = require('./Routes/authRoutes');
 const userRouter = require('./Routes/userRoutes');
 
 let app = express();
+
+app.use(helmet());
 
 //This will create 3 new headers in the response:
 //X-Powered-By, X-RateLimit, X-RateLimit-Remaining
@@ -18,7 +22,9 @@ let limiter = rateLimit({
 });
 
 app.use('/api', limiter);
-app.use(express.json()); // Adds a middleware to add the request body to the request object
+// Adds a middleware to add the request body to the request object
+// Will only accept 10kb in the request body
+app.use(express.json({limi: '10kb'})); 
 app.use(express.static('./public')); // Serve static files
 // app.get('/api/v1/movies', getAllMovies);
 // app.get('/api/v1/movies/:id', getMovie);
@@ -26,7 +32,7 @@ app.use(express.static('./public')); // Serve static files
 // app.patch('/api/v1/movies/:id', updateMovie);
 // app.delete('/api/v1/movies/:id', deleteMovie);
 
-//Mount the router moviesRouter to path /api/v1/movies. The router is basically a middleware 
+//Mount the rout;er moviesRouter to path /api/v1/movies. The router is basically a middleware 
 //that will only be applied to those requests that contain the path in the url
 app.use('/api/v1/movies', moviesRouter);
 app.use('/api/v1/auth', authRouter);
