@@ -1,6 +1,8 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const sanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
 
 const CustomError = require ('./Utils/CustomError');
 const globalErrorHandler = require('./Controllers/errorController');
@@ -10,7 +12,8 @@ const userRouter = require('./Routes/userRoutes');
 
 let app = express();
 
-app.use(helmet());
+// adds security HTTP response headers
+app.use(helmet()); 
 
 //This will create 3 new headers in the response:
 //X-Powered-By, X-RateLimit, X-RateLimit-Remaining
@@ -24,7 +27,14 @@ let limiter = rateLimit({
 app.use('/api', limiter);
 // Adds a middleware to add the request body to the request object
 // Will only accept 10kb in the request body
-app.use(express.json({limi: '10kb'})); 
+app.use(express.json({limit: '10kb'})); 
+
+// Will look for any NoSQL query in the body and filter out all the '$' and '.'
+// so operators injected no longer work
+app.use(sanitize());
+// Works removing or encoding potentially dangerous characters and scripts from user input.
+app.use(xss()); 
+
 app.use(express.static('./public')); // Serve static files
 // app.get('/api/v1/movies', getAllMovies);
 // app.get('/api/v1/movies/:id', getMovie);
