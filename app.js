@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const sanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
+const hpp = require('hpp');
 
 const CustomError = require ('./Utils/CustomError');
 const globalErrorHandler = require('./Controllers/errorController');
@@ -33,7 +34,17 @@ app.use(express.json({limit: '10kb'}));
 // so operators injected no longer work
 app.use(sanitize());
 // Works removing or encoding potentially dangerous characters and scripts from user input.
-app.use(xss()); 
+app.use(xss());
+// Avoid http parameter polution (e.g {{URL}}api/v1/movies?sort=price&sort=duration 
+// the sort parameter value in the query string is converted to an array: [price, duration], which is a problem in the sort() function)
+// app.use(hpp());
+// Using hpp(), it will ONLY apply the last value of sort and omit the previous ones 
+// You need to whitelist the fields you don't want to have that behavior:
+//  app.use(hpp({whitelist: [
+//     'duration',
+//     'ratings',
+//     'releaseYear'
+// ]}));
 
 app.use(express.static('./public')); // Serve static files
 // app.get('/api/v1/movies', getAllMovies);
